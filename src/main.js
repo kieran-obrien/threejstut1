@@ -32,8 +32,9 @@ const backTexture = textureLoader.load("/space.jpg");
 // Setting intial geometry and material for the sun and planets
 const geometrySun = new THREE.SphereGeometry(10, 32, 32);
 const geometryPlanet = new THREE.SphereGeometry(4, 15, 15);
+const materialSun = new THREE.MeshStandardMaterial({ color: 0xffaa0d });
 const material = new THREE.MeshStandardMaterial({ color: 0x006600 });
-const sun = new THREE.Mesh(geometrySun, material);
+const sun = new THREE.Mesh(geometrySun, materialSun);
 
 // Add the initial sun
 scene.add(sun);
@@ -66,14 +67,34 @@ function stars() {
 }
 stars();
 // Add planet functionality
-
+let planetCount = document.getElementById("planet-count").value;
 function addPlanets(planets) {
-    let planetCount = document.getElementById("planet-count").value;
+    // Check if planet count has changed
+    let planetCountCheck = planetCount;
+    planetCount = document.getElementById("planet-count").value;
+    if (planetCountCheck !== planetCount) {
+        const allPlanets = document.querySelectorAll("#planet-size-div form");
+        allPlanets.forEach((p) => p.remove());
+        const planetSizeDiv = document.getElementById("planet-size-div");
+        for (let i = 0; i < planetCount; i++) {
+            const form = document.createElement("form");
+            form.innerHTML = `<label for="planet-size">Planet ${i + 1} Size</label>
+                <input
+                    type="range"
+                    id="planet-size"
+                    name="planet-size"
+                    min="1"
+                    max="10"
+                    value="1"
+                />`;
+            planetSizeDiv.appendChild(form);
+        }
+    }
     // Remove all planet frames
     for (const p of planets) {
         scene.remove(p);
     }
-    const planetSize = document.getElementById("planet-size").value;
+    const planetSize = 1
     console.log(planetCount);
     let initialPlanetDistance = 45; // Distance of first planet from sun
     const planetsArray =[];
