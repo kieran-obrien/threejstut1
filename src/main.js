@@ -49,7 +49,145 @@ const lightHelper = new THREE.PointLightHelper(pointLight);
 //const gridHelper = new THREE.GridHelper(200, 50);
 // scene.add(lightHelper, gridHelper);
 
-// Generate random stars
+// Set planet class
+class Planet {
+    constructor(size, distanceFromLast, orbitSpeed, mesh) {
+        this.size = size;
+        this.distance = distanceFromLast;
+        this.speed = orbitSpeed;
+        this.previousSpeed = orbitSpeed;
+        this.mesh = mesh;
+        this.inOrbit = false;
+        this.name = "";
+    }
+    updatePlanetSize(size) {
+        this.mesh.scale.set(size, size, size);
+    }
+    updatePlanetSpeed(speed) {
+        let targetSpeed = speed;
+        console.log(this.speed, this.previousSpeed);
+        this.previousSpeed = this.speed;
+        this.speed = speed;
+        console.log(this.speed, this.previousSpeed);
+        /*const transitionDuration = 1000; // Duration of the transition in milliseconds
+        const startTime = Date.now();
+        const startSpeed = this.previousSpeed;
+        const endSpeed = targetSpeed;
+
+        const animateTransition = () => {
+            const elapsedTime = Date.now() - startTime;
+            const progress = Math.min(elapsedTime / transitionDuration, 1);
+            this.speed = startSpeed + (endSpeed - startSpeed) * progress;
+
+            if (progress < 1) {
+                requestAnimationFrame(animateTransition);
+            }
+        };
+
+        animateTransition();
+        */
+    }
+}
+
+// Create and populate array of ten planet objects
+function getPlanet() {
+    return new Planet(1, 45, 0.0005, new THREE.Mesh(geometryPlanet, material));
+}
+const planetsArray = Array(10).fill().map(getPlanet);
+for (let i = 1; i < planetsArray.length + 1; i++) {
+    planetsArray[i - 1].name = `Planet ${i}`;
+}
+console.log(planetsArray);
+console.log(planetsArray[0]);
+
+// Add planet functionality
+let planetCount = 0;
+function handlePlanets(planets) {
+    // Update planet size
+    const updatePlanetSize = (index) => {
+        const size = document.getElementById(`planet-size-${index}`).value;
+        planets[index].updatePlanetSize(size);
+    };
+    window.updatePlanetSize = updatePlanetSize;
+
+    // Update planet orbit speed
+    const updatePlanetSpeed = (index) => {
+        const speed = document.getElementById(`orbit-speed-${index}`).value;
+        planets[index].updatePlanetSpeed(speed / 5000);
+    };
+    window.updatePlanetSpeed = updatePlanetSpeed;
+
+    // Add planet control forms
+    let planetCountCheck = planetCount;
+    planetCount = document.getElementById("planet-count").value;
+    if (planetCountCheck !== planetCount) {
+        console.log("Planet count changed");
+        console.log(planetCount);
+        const allPlanets = document.querySelectorAll(
+            "#planet-controls-div form"
+        );
+        allPlanets.forEach((p) => p.remove());
+        for (let i = 0; i < planetCount; i++) {
+            const form = document.createElement("form");
+            form.innerHTML = `<label for="planet-size">Planet ${
+                i + 1
+            } Size</label>
+                <input onchange="updatePlanetSize(${i})"
+                    type="range"
+                    id="planet-size-${i}"
+                    name="planet-size"
+                    min="1"
+                    max="10"
+                    value="1"
+                />
+                <label for="orbit-speed">Planet ${i + 1} Orbit Speed</label>
+                <input onchange="updatePlanetSpeed(${i})"
+                    type="range"
+                    id="orbit-speed-${i}"
+                    name="orbit-speed"
+                    min="1"
+                    max="10"
+                    value="1"
+                />
+                `;
+
+            // Set div to append control forms to
+            const planetSizeDiv = document.getElementById(
+                "planet-controls-div"
+            );
+            planetSizeDiv.appendChild(form);
+        }
+    }
+
+    // Add the planets
+    for (let i = 0; i < planets.length; i++) {
+        if (scene.children.includes(planets[i].mesh)) {
+            planets[i].inOrbit = false;
+            scene.remove(planets[i].mesh);
+        }
+        if (i < planetCount) {
+            planets[i].inOrbit = true;
+            scene.add(planets[i].mesh);
+        }
+    }
+}
+
+// Arrow orbit effect
+const arrow = () => {
+    const dir = planetsArray[0].mesh.position.clone();
+    dir.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
+    //normalize the direction vector (convert to vector of length 1)
+    dir.normalize();
+
+    const origin = planetsArray[0].mesh.position.clone();
+    const length = 2;
+    const hex = 0xffff00;
+    const arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex, 0, 0);
+    scene.add(arrowHelper);
+    setTimeout(() => scene.remove(arrowHelper), 5000);
+};
+
+// Generate random star effect
 function stars() {
     // Define the star geometry and material once
     const geometryStar = new THREE.SphereGeometry(0.8, 24, 24);
@@ -67,85 +205,20 @@ function stars() {
 }
 stars();
 
-class Planet {
-    constructor(size, distanceFromLast, orbitSpeed, mesh) {
-        this.size = size;
-        this.distance = distanceFromLast;
-        this.speed = orbitSpeed;
-        this.mesh = mesh;
-        this.inOrbit = false;
-    }
-    updatePlanetSize(size) {
-        this.mesh.scale.set(size, size, size);
-    }
-}
-
-function getPlanet() {
-    return new Planet(1, 45, 0.01, new THREE.Mesh(geometryPlanet, material));
-}
-const planetsArrayNew = Array(10).fill().map(getPlanet);
-console.log(planetsArrayNew);
-console.log(planetsArrayNew[0]);
-
-// Add planet functionality
-let planetCount = 0;
-function handlePlanets(planets) {
-    // Remove all planet size forms
-
-    const planetSizeDiv = document.getElementById("planet-size-div");
-    const updatePlanetSize = (index) => {
-        const size = document.getElementById(`planet-size-${index}`).value;
-        planets[index].updatePlanetSize(size);
-    };
-    window.updatePlanetSize = updatePlanetSize;
-
-    // Add planet size forms
-    let planetCountCheck = planetCount;
-    planetCount = document.getElementById("planet-count").value;
-    if (planetCountCheck !== planetCount) {
-        console.log("Planet count changed");
-        console.log(planetCount);
-        const allPlanets = document.querySelectorAll("#planet-size-div form");
-        allPlanets.forEach((p) => p.remove());
-        for (let i = 0; i < planetCount; i++) {
-            const form = document.createElement("form");
-            form.innerHTML = `<label for="planet-size">Planet ${
-                i + 1
-            } Size</label>
-                <input onchange="updatePlanetSize(${i})"
-                    type="range"
-                    id="planet-size-${i}"
-                    name="planet-size"
-                    min="1"
-                    max="10"
-                    value="1"
-                />`;
-            planetSizeDiv.appendChild(form);
-        }
-    }
-
-    // Add the planets
-    for (let i = 0; i < planets.length; i++) {
-        if (scene.children.includes(planets[i].mesh)) {
-            scene.remove(planets[i].mesh);
-        }
-        if (i < planetCount) {
-            scene.add(planets[i].mesh);
-        }
-    }
-}
-
 // Function to animate the scene/loop
 function animate() {
-    handlePlanets(planetsArrayNew);
+    arrow();
+    handlePlanets(planetsArray);
     let orbitRadius = 45;
-    for (const p of planetsArrayNew) {
-        const date = Date.now() * 0.001;
+    for (const p of planetsArray) {
+        // Smoothly transition to the new speed
+        const orbitSpeed = Date.now() * p.speed;
         p.mesh.position.set(
-            Math.cos(date) * orbitRadius,
+            Math.cos(orbitSpeed) * orbitRadius,
             0,
-            Math.sin(date) * orbitRadius
+            Math.sin(orbitSpeed) * orbitRadius
         );
+
         orbitRadius += 45;
     }
     requestAnimationFrame(animate);
