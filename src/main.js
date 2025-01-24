@@ -27,13 +27,14 @@ const controls = new OrbitControls(camera, renderer.domElement);
 
 // Load the texture and set it as the background
 const textureLoader = new THREE.TextureLoader();
-const backTexture = textureLoader.load("/space.jpg");
+const earthTexture = textureLoader.load("/earth-texture.jpg");
 
 // Setting intial geometry and material for the sun and planets
 const geometrySun = new THREE.SphereGeometry(10, 32, 32);
 const geometryPlanet = new THREE.SphereGeometry(4, 15, 15);
 const materialSun = new THREE.MeshStandardMaterial({ color: 0xffaa0d });
 const material = new THREE.MeshStandardMaterial({ color: 0x006600 });
+const planetMaterial = new THREE.MeshPhongMaterial({map: earthTexture});
 const sun = new THREE.Mesh(geometrySun, materialSun);
 
 // Add the initial sun
@@ -56,19 +57,19 @@ class Planet {
         this.distance = distanceFromLast;
         this.speed = orbitSpeed;
         this.previousSpeed = orbitSpeed;
+        this.speedValue = 1;
         this.mesh = mesh;
         this.inOrbit = false;
         this.name = "";
     }
     updatePlanetSize(size) {
+        this.size = size;
         this.mesh.scale.set(size, size, size);
     }
-    updatePlanetSpeed(speed) {
-        let targetSpeed = speed;
-        console.log(this.speed, this.previousSpeed);
-        this.previousSpeed = this.speed;
+    updatePlanetSpeed(speed, value) {
+        console.log(value);
         this.speed = speed;
-        console.log(this.speed, this.previousSpeed);
+        this.speedValue = value;
         /*const transitionDuration = 1000; // Duration of the transition in milliseconds
         const startTime = Date.now();
         const startSpeed = this.previousSpeed;
@@ -89,9 +90,19 @@ class Planet {
     }
 }
 
+let isPaused = false;
+// Pause and play functionality
+function pausePlay() {
+    console.log(isPaused)
+    isPaused = !isPaused;
+    console.log(isPaused);
+}
+const pauseButton = document.getElementById("pause-button");
+pauseButton.addEventListener("click", pausePlay);
+
 // Create and populate array of ten planet objects
 function getPlanet() {
-    return new Planet(1, 45, 0.0005, new THREE.Mesh(geometryPlanet, material));
+    return new Planet(1, 45, 0.0005, new THREE.Mesh(geometryPlanet, planetMaterial));
 }
 const planetsArray = Array(10).fill().map(getPlanet);
 for (let i = 1; i < planetsArray.length + 1; i++) {
@@ -106,6 +117,7 @@ function handlePlanets(planets) {
     // Update planet size
     const updatePlanetSize = (index) => {
         const size = document.getElementById(`planet-size-${index}`).value;
+        console.log(size);
         planets[index].updatePlanetSize(size);
     };
     window.updatePlanetSize = updatePlanetSize;
@@ -113,43 +125,48 @@ function handlePlanets(planets) {
     // Update planet orbit speed
     const updatePlanetSpeed = (index) => {
         const speed = document.getElementById(`orbit-speed-${index}`).value;
-        planets[index].updatePlanetSpeed(speed / 5000);
+        planets[index].updatePlanetSpeed(speed / 5000, speed);
     };
     window.updatePlanetSpeed = updatePlanetSpeed;
 
     // Add planet control forms
     let planetCountCheck = planetCount;
     planetCount = document.getElementById("planet-count").value;
+    // Has planet count changed?
     if (planetCountCheck !== planetCount) {
         console.log("Planet count changed");
         console.log(planetCount);
         const allPlanets = document.querySelectorAll(
             "#planet-controls-div form"
         );
-        allPlanets.forEach((p) => p.remove());
+        allPlanets.forEach((p, index) => {
+            p.remove();
+        });
         for (let i = 0; i < planetCount; i++) {
+            console.log(planetsArray[i]);
+            console.log(planetsArray[i].size);
             const form = document.createElement("form");
             form.innerHTML = `<label for="planet-size">Planet ${
                 i + 1
             } Size</label>
-                <input onchange="updatePlanetSize(${i})"
-                    type="range"
-                    id="planet-size-${i}"
-                    name="planet-size"
-                    min="1"
-                    max="10"
-                    value="1"
-                />
-                <label for="orbit-speed">Planet ${i + 1} Orbit Speed</label>
-                <input onchange="updatePlanetSpeed(${i})"
-                    type="range"
-                    id="orbit-speed-${i}"
-                    name="orbit-speed"
-                    min="1"
-                    max="10"
-                    value="1"
-                />
-                `;
+            <input onchange="updatePlanetSize(${i})"
+                type="range"
+                id="planet-size-${i}"
+                name="planet-size"
+                min="1"
+                max="10"
+                value="${planetsArray[i].size}"
+            />
+            <label for="orbit-speed">Planet ${i + 1} Orbit Speed</label>
+            <input onchange="updatePlanetSpeed(${i})"
+                type="range"
+                id="orbit-speed-${i}"
+                name="orbit-speed"
+                min="1"
+                max="10"
+                value="${planetsArray[i].speedValue}"
+            />
+            `;
 
             // Set div to append control forms to
             const planetSizeDiv = document.getElementById(
@@ -209,19 +226,22 @@ stars();
 function animate() {
     arrow();
     handlePlanets(planetsArray);
-    let orbitRadius = 45;
-    for (const p of planetsArray) {
-        // Smoothly transition to the new speed
-        const orbitSpeed = Date.now() * p.speed;
-        p.mesh.position.set(
-            Math.cos(orbitSpeed) * orbitRadius,
-            0,
-            Math.sin(orbitSpeed) * orbitRadius
-        );
+    let orbitRadius = 65;
+    if (!isPaused){
+        for (const p of planetsArray) {
+            // Smoothly transition to the new speed
+            const orbitSpeed = Date.now() * p.speed;
+            p.mesh.position.set(
+                Math.cos(orbitSpeed) * orbitRadius,
+                0,
+                Math.sin(orbitSpeed) * orbitRadius
+            );
 
-        orbitRadius += 45;
+            orbitRadius += 65;
+        }
     }
     requestAnimationFrame(animate);
+    planetsArray[0].mesh.rotation.y += 0.004;
     sun.rotation.y += 0.001;
     controls.update();
     renderer.render(scene, camera);

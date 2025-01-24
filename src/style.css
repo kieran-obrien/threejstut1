@@ -33,10 +33,6 @@ canvas {
     height: 100px;
 }
 
-#user-interface {
-    z-index: 1;
-}
-
 h1 {
     font-size: 4em;
     align-items: end;
