@@ -32,11 +32,6 @@ const geometrySun = new THREE.SphereGeometry(10, 32, 32);
 const materialSun = new THREE.MeshStandardMaterial({ color: 0xffaa0d });
 const material = new THREE.MeshStandardMaterial({ color: 0x006600 });
 const geometryPlanet = new THREE.SphereGeometry(4, 15, 15);
-const sun = new THREE.Mesh(geometrySun, materialSun);
-
-// Add the initial sun
-scene.add(sun);
-sun.position.set(0, 0, 0);
 
 // Add lighting to the scene
 const pointLight = new THREE.PointLight(0xffffff, 1000, 1000);
@@ -54,27 +49,23 @@ const planetTextures = [];
 
 let planetsArray;
 let planetMaterials = [];
+let sun;
 const loadTexture = (counter) => {
     const texturePath = `./texture${counter}.jpg`;
-    console.log(`Attempting to load: ${texturePath}`);
 
     textureLoader.load(
         texturePath,
         (texture) => {
             // On successful load
-            console.log(`Successfully loaded: ${texturePath}`);
             planetTextures.push(texture);
             loadTexture(counter + 1); // Load the next texture
-            console.log(planetTextures);
         },
         undefined,
         (err) => {
             // On error (e.g., texture not found)
-            console.error(`Failed to load: ${texturePath}`, err);
             console.log("Finished loading textures");
             console.log(planetTextures);
-            [planetsArray, planetMaterials] = createPlanets(); // Create planets after loading all textures
-            console.log(planetsArray);
+            [planetsArray, planetMaterials, sun] = createPlanets(); // Create planets after loading all textures
         }
     );
 };
@@ -93,21 +84,26 @@ class Planet {
         this.size = size;
         this.distance = distanceFromLast;
         this.speed = orbitSpeed;
-        this.previousSpeed = orbitSpeed;
-        this.speedValue = 1;
+        this.spinSpeed = 0.00125;
         this.mesh = mesh;
         this.inOrbit = false;
         this.name = "";
         this.textureCode = 0;
+        this.currentAngle = 0;
+        this.lastUpdateTime = Date.now();
     }
     updatePlanetSize(size) {
         this.size = size;
         this.mesh.scale.set(size, size, size);
     }
-    updatePlanetSpeed(speed, value) {
-        console.log(value);
-        this.speed = speed;
-        this.speedValue = value;
+    updatePlanetSpeed(speed) {
+        console.log(this.speed);
+        this.speed = speed / 8000;
+        console.log(this.speed);
+    }
+    updatePlanetSpinSpeed(spinSpeed) {
+        this.spinSpeed = spinSpeed / 800;
+        console.log(this.spinSpeed);
     }
 }
 
@@ -121,14 +117,13 @@ function getPlanet() {
     return new Planet(
         1,
         45,
-        0.0005,
+        0.000125,
         new THREE.Mesh(geometryPlanet, planetMaterialInit)
     );
 }
 
 function createPlanets() {
     let materialCounter = 0;
-    console.log(planetTextures[materialCounter]);
     planetMaterials = Array(planetTextures.length)
         .fill()
         .map(() => {
@@ -142,10 +137,16 @@ function createPlanets() {
     for (let i = 1; i < planetsArray.length + 1; i++) {
         planetsArray[i - 1].name = `Planet ${i}`;
     }
+    const sun = new THREE.Mesh(geometrySun, planetMaterials[3]);
+
+    // Add the initial sun
+    scene.add(sun);
+    sun.position.set(0, 0, 0);
+
     readyToStart = true;
     console.log("Planets created");
     console.log(planetsArray);
-    return [planetsArray, planetMaterials];
+    return [planetsArray, planetMaterials, sun];
 }
 
 // console.log(planetsArray);
@@ -165,7 +166,7 @@ function handlePlanets(planets) {
     // Update planet orbit speed
     const updatePlanetSpeed = (index) => {
         const speed = document.getElementById(`orbit-speed-${index}`).value;
-        planets[index].updatePlanetSpeed(speed / 5000, speed);
+        planets[index].updatePlanetSpeed(speed);
     };
     window.updatePlanetSpeed = updatePlanetSpeed;
 
@@ -182,13 +183,18 @@ function handlePlanets(planets) {
     };
     window.updatePlanetTexture = updatePlanetTexture;
 
+    // Update planet spin speed
+    const updatePlanetSpinSpeed = (index) => {
+        const spin = document.getElementById(`planet-spin-${index}`).value;
+        planets[index].updatePlanetSpinSpeed(spin);
+    };
+    window.updatePlanetSpinSpeed = updatePlanetSpinSpeed;
+
     // Add planet control forms
     let planetCountCheck = planetCount;
     planetCount = document.getElementById("planet-count").value;
     // Has planet count changed?
     if (planetCountCheck !== planetCount) {
-        console.log("Planet count changed");
-        console.log(planetCount);
         const allPlanets = document.querySelectorAll(
             "#planet-controls-div form"
         );
@@ -196,28 +202,38 @@ function handlePlanets(planets) {
             p.remove();
         });
         for (let i = 0; i < planetCount; i++) {
-            console.log(planetsArray[i]);
-            console.log(planetsArray[i].size);
             const form = document.createElement("form");
             form.innerHTML = `<label for="planet-size">Planet ${
                 i + 1
             } Size</label>
-            <input onchange="updatePlanetSize(${i})"
+            <input oninput="updatePlanetSize(${i})"
                 type="range"
                 id="planet-size-${i}"
                 name="planet-size"
                 min="1"
                 max="10"
+                step="0.1"
                 value="${planetsArray[i].size}"
             />
             <label for="orbit-speed">Planet ${i + 1} Orbit Speed</label>
-            <input onchange="updatePlanetSpeed(${i})"
+            <input oninput="updatePlanetSpeed(${i})"
                 type="range"
                 id="orbit-speed-${i}"
                 name="orbit-speed"
                 min="1"
                 max="10"
-                value="${planetsArray[i].speedValue}"
+                step="0.1"
+                value="${planetsArray[i].speed}"
+            />
+            <label for="planet-spin">Planet ${i + 1} Spin Speed</label>
+            <input oninput="updatePlanetSpinSpeed(${i})"
+                type="range"
+                id="planet-spin-${i}"
+                name="planet-spin"
+                min="1"
+                max="12"
+                step="0.1"
+                value="${planetsArray[i].spinSpeed}"
             />
             <label for="planet-texture">Planet ${i + 1} Texture</label>
             <input onclick="updatePlanetTexture(${i})"
@@ -283,34 +299,42 @@ stars();
 // Pause and play functionality
 let isPaused = false;
 function pausePlay() {
-    console.log(isPaused);
+    for (let i = 0; i < planetsArray.length; i++) {
+        // Update the last update time for each planet
+        planetsArray[i].lastUpdateTime = Date.now();
+    }
     isPaused = !isPaused;
-    console.log(isPaused);
 }
 const pauseButton = document.getElementById("pause-button");
 pauseButton.addEventListener("click", pausePlay);
 
 // Function to animate the scene/loop
 function animate() {
-    console.log(planetsArray);
-    handlePlanets(planetsArray);
-    let orbitRadius = 65;
+    // arrow(); // Arrow orbit effect
+    handlePlanets(planetsArray); // Handle planet controls
+    let orbitRadius = 120;
     if (!isPaused) {
-        for (const p of planetsArray) {
-            // Smoothly transition to the new speed
-            const orbitSpeed = Date.now() * p.speed;
-            p.mesh.position.set(
-                Math.cos(orbitSpeed) * orbitRadius,
-                0,
-                Math.sin(orbitSpeed) * orbitRadius
-            );
+        // If not paused, update the planets
+        const currentTime = Date.now();
+        planetsArray.forEach((p) => {
+            // Calculate the change in angle based on the speed and elapsed time
+            const deltaAngle = (currentTime - p.lastUpdateTime) * p.speed;
+            p.currentAngle += deltaAngle;
+            p.lastUpdateTime = currentTime;
 
-            orbitRadius += 65;
-        }
+            // Set the new position based on the current angle
+            p.mesh.position.set(
+                Math.cos(p.currentAngle) * orbitRadius,
+                0,
+                Math.sin(p.currentAngle) * orbitRadius
+            );
+            orbitRadius += 120;
+            // Rotate the planet
+            p.mesh.rotation.y += p.spinSpeed;
+        });
     }
+    sun.rotation.y += 0.0005;
     requestAnimationFrame(animate);
-    planetsArray[0].mesh.rotation.y += 0.004;
-    sun.rotation.y += 0.001;
     controls.update();
     renderer.render(scene, camera);
 }
