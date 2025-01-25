@@ -3,35 +3,40 @@
     <head>
         <meta charset="UTF-8" />
         <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bungee+Hairline&display=swap"
+            rel="stylesheet"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Vite App</title>
     </head>
     <body>
-        <h1>Solaro</h1>
-        <div id="planet-forms">
-            <form>
-                <label for="planet-count">Planet Count</label>
-                <input
-                    type="range"
-                    id="planet-count"
-                    name="planet-count"
-                    min="0"
-                    max="10"
-                    value="0"
-                />
-                <label for="planet-size">Planet Size</label>
-                <input
-                    type="range"
-                    id="planet-size"
-                    name="planet-size"
-                    min="1"
-                    max="10"
-                    value="1"
-                />
-            </form>
+        <div class="container">
+            <div class="container-h1">
+                <h1>Helio</h1>
+            </div>
+            <div id="user-interface">
+                <div id="planet-count-form">
+                    <form>
+                        <label for="planet-count">Planet Count</label>
+                        <input
+                            type="range"
+                            id="planet-count"
+                            name="planet-count"
+                            min="0"
+                            max="10"
+                            value="0"
+                        />
+                    </form>
+                </div>
+                <div id="planet-controls-div"></div>
+                <div id="pause-button-div">
+                    <button id="pause-button">Pause</button>
+            </div>
         </div>
-        <button id="add-planet">Add Planet</button>
         <canvas id="bg"></canvas>
-        <script type="module" src="/src/main.js"></script>
+        <script defer type="module" src="/src/main.js"></script>
     </body>
 </html>

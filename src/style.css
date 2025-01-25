@@ -1,10 +1,56 @@
-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: -1;
+html {
+    margin: 0px;
+    height: 100%;
+    width: 100%;
+    font-family: Bungee Hairline;
 }
 
-h1, form {
-  color: white;
+body {
+    margin: 0px;
+    min-height: 100%;
+    width: 100%;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+.container {
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    background-color: black;
+    color: white;
+}
+
+.container-h1 {
+    display: flex;
+    justify-content: center;
+    z-index: 1;
+    height: 100px;
+}
+
+h1 {
+    font-size: 4em;
+    align-items: end;
+    font-family: Bungee Hairline;
+    height: 100px;
+}
+h1,
+form {
+    color: white;
+}
+
+#user-interface {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    font-weight: bold;
+    font-size: 1.5em;
 }
